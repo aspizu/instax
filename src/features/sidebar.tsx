@@ -4,7 +4,7 @@ import {
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue
+    SelectValue,
 } from "@/components/ui/select"
 import {films, papers} from "@/lib/instax"
 import {generatePDF} from "@/lib/print-pdf"
@@ -18,20 +18,27 @@ async function onUploadPicture() {
         types: [
             {
                 description: "Images",
-                accept: {"image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"]}
-            }
-        ]
+                accept: {"image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"]},
+            },
+        ],
     })
     const files = await Promise.all(handles.map((handle) => handle.getFile()))
     Pictures.addFile(...files)
 }
 
 export function Sidebar() {
+    const pictures = Pictures.getPictures()
+    const hasPictures = pictures.length > 0
+
     return (
         <div className="border-border flex flex-col items-stretch gap-4 border-r p-4">
-            <Button onClick={() => generatePDF()} className="w-full">
+            <Button
+                onClick={() => generatePDF()}
+                className="w-full"
+                disabled={!hasPictures}
+            >
                 <PrinterIcon />
-                Print to PDF
+                Print to PDF {hasPictures ? `(${pictures.length})` : ""}
             </Button>
             <Button onClick={onUploadPicture} variant="secondary" className="w-full">
                 <ImagePlusIcon />

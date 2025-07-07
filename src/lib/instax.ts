@@ -3,8 +3,8 @@ export const papers = {
         name: "a4",
         description: "Metric printer paper.",
         width: 210,
-        height: 297
-    }
+        height: 297,
+    },
 }
 
 export const films = {
@@ -13,11 +13,35 @@ export const films = {
         description: "Fits in a smartphone case.",
         frame: {
             width: 54,
-            height: 86
+            height: 86,
         },
         image: {
             width: 46,
-            height: 62
-        }
-    }
+            height: 62,
+        },
+    },
+    square: {
+        name: "square",
+        description: "Square format instant film.",
+        frame: {
+            width: 72,
+            height: 86,
+        },
+        image: {
+            width: 62,
+            height: 62,
+        },
+    },
+    wide: {
+        name: "wide",
+        description: "Wide format instant film.",
+        frame: {
+            width: 108,
+            height: 86,
+        },
+        image: {
+            width: 99,
+            height: 62,
+        },
+    },
 }
