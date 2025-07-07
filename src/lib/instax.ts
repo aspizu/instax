@@ -5,6 +5,12 @@ export const papers = {
         width: 210,
         height: 297,
     },
+    letter: {
+        name: "letter",
+        description: "US Letter printer paper.",
+        width: 215.9,
+        height: 279.4,
+    },
 }
 
 export const films = {

@@ -1,6 +1,6 @@
 import * as Img from "@/lib/image"
-import {films} from "@/lib/instax"
-import {film, Pictures} from "@/state"
+import {films, papers} from "@/lib/instax"
+import {film, paper, Pictures} from "@/state"
 import {jsPDF} from "jspdf"
 
 export async function generatePDF() {
@@ -12,11 +12,12 @@ export async function generatePDF() {
     }
 
     const $film = films[film.value]
-    const doc = new jsPDF({unit: "mm", format: "a4"})
+    const $paper = papers[paper.value]
+    const doc = new jsPDF({unit: "mm", format: paper.value})
 
-    // Calculate how many images can fit on A4 page
-    const pageWidth = 210 // A4 width in mm
-    const pageHeight = 297 // A4 height in mm
+    // Calculate how many images can fit on page
+    const pageWidth = $paper.width
+    const pageHeight = $paper.height
     const frameWidth = $film.frame.width
     const frameHeight = $film.frame.height
 
