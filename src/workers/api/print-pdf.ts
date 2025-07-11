@@ -13,7 +13,10 @@ worker.onmessage = (event) => {
         progress.value = event.data.progress as number
     } else if (event.data.kind == "done") {
         working.value = false
-        saveAs(event.data.result, "instax-prints.pdf")
+        saveAs(
+            event.data.result,
+            `instax-printout-${crypto.randomUUID().slice(0, 8)}.pdf`,
+        )
     }
 }
 
