@@ -1,6 +1,5 @@
 import eslint from "@eslint/js"
 import banRelativeImports from "eslint-plugin-ban-relative-imports"
-import preactSignals from "eslint-plugin-preact-signals"
 import reactHooks from "eslint-plugin-react-hooks"
 import reactRefresh from "eslint-plugin-react-refresh"
 import globals from "globals"
@@ -21,14 +20,12 @@ export default tseslint.config([
         },
         plugins: {
             "ban-relative-imports": banRelativeImports,
-            "preact-signals": preactSignals,
             "react-hooks": reactHooks,
             "react-refresh": reactRefresh,
         },
         rules: {
             ...reactRefresh.configs.recommended.rules,
             ...reactHooks.configs.recommended.rules,
-            "preact-signals/no-implicit-boolean-signal": "error",
             "ban-relative-imports/ban-relative-imports": "error",
             "func-style": ["error", "declaration"],
             "@typescript-eslint/no-unsafe-argument": "off",

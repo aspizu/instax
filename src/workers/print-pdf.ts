@@ -1,6 +1,5 @@
 import {films, papers, type Film, type Paper} from "@/lib/constants"
 import {cropImage} from "@/lib/utils"
-import {selectedPaper} from "@/state/config"
 import {jsPDF} from "jspdf"
 
 onmessage = (event) => {
@@ -13,14 +12,27 @@ onmessage = (event) => {
 
 function drawGrid(
     film: (typeof films)["mini"],
-    paper: (typeof papers)["a4"],
     pdf: jsPDF,
+    offsetX: number,
+    offsetY: number,
+    cols: number,
+    rows: number,
 ) {
-    for (let x = film.frame.width; x < paper.width; x += film.frame.width) {
-        pdf.line(x, 0, x, paper.height)
+    pdf.setDrawColor(200, 200, 200)
+    pdf.setLineDashPattern([2, 2], 0)
+
+    const gridWidth = cols * film.frame.width
+    const gridHeight = rows * film.frame.height
+
+    pdf.rect(offsetX, offsetY, gridWidth, gridHeight, "S")
+
+    for (let col = 1; col < cols; col++) {
+        const x = offsetX + col * film.frame.width
+        pdf.line(x, offsetY, x, offsetY + gridHeight)
     }
-    for (let y = film.frame.height; y < paper.height; y += film.frame.height) {
-        pdf.line(0, y, paper.width, y)
+    for (let row = 1; row < rows; row++) {
+        const y = offsetY + row * film.frame.height
+        pdf.line(offsetX, y, offsetX + gridWidth, y)
     }
 }
 
@@ -36,38 +48,42 @@ export async function printPDF(
     const paper = papers[paperKey]
     const topMargin = (film.frame.width - film.image.width) / 2
     const pdf = new jsPDF({
-        format: selectedPaper.value == "a4" ? "a4" : "letter",
+        format: paperKey === "a4" ? "a4" : "letter",
         unit: "mm",
     })
-    drawGrid(film, paper, pdf)
-    const maxRows = Math.floor(paper.height / film.frame.height)
-    let x = 0
-    let y = 0
-    let rows = 0
+
+    const cols = Math.floor(paper.width / film.frame.width)
+    const rows = Math.floor(paper.height / film.frame.height)
+    const offsetX = (paper.width - cols * film.frame.width) / 2
+    const offsetY = (paper.height - rows * film.frame.height) / 2
+
+    drawGrid(film, pdf, offsetX, offsetY, cols, rows)
+
+    let col = 0
+    let row = 0
     let i = 0
     for (const picture of pictures) {
         const image = await createImageBitmap(
             await (await fetch(picture.objectURL)).blob(),
         )
+        const x = offsetX + col * film.frame.width + topMargin
+        const y = offsetY + row * film.frame.height + topMargin
         pdf.addImage(
             cropImage(image, picture.crop),
             "PNG",
-            x + topMargin,
-            y + topMargin,
+            x,
+            y,
             film.image.width,
             film.image.height,
         )
-        x += film.frame.width
-        if (x + film.frame.width >= paper.width) {
-            x = 0
-            y += film.frame.height
-            rows += 1
-            if (rows >= maxRows) {
-                rows = 0
-                x = 0
-                y = 0
+        col++
+        if (col >= cols) {
+            col = 0
+            row++
+            if (row >= rows) {
+                row = 0
                 pdf.addPage()
-                drawGrid(film, paper, pdf)
+                drawGrid(film, pdf, offsetX, offsetY, cols, rows)
             }
         }
         i++

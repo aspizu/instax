@@ -3,7 +3,7 @@ export const MM = 5
 export const papers = {
     a4: {
         name: "A4",
-        description: "Metric printer paper.",
+        description: "Metric standard printer paper.",
         width: 210,
         height: 297,
     },

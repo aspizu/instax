@@ -1,12 +1,11 @@
 import {DisplayImage} from "@/components/display-image"
 import {Button} from "@/components/ui/button"
 import * as constants from "@/lib/constants"
-import {selectedFilm} from "@/state/config"
+import {useConfigStore} from "@/state/config"
 import type {Picture} from "@/state/pictures"
-import * as pictures from "@/state/pictures"
-import {batch, useSignal} from "@preact/signals-react"
+import {usePicturesStore} from "@/state/pictures"
 import {CheckIcon, Edit2Icon, TrashIcon} from "lucide-react"
-import {useRef, type RefObject} from "react"
+import {useRef, useState, type RefObject} from "react"
 import Cropper, {getInitialCropFromCroppedAreaPercentages} from "react-easy-crop"
 
 function PictureEditor({
@@ -18,10 +17,11 @@ function PictureEditor({
     currentCrop: RefObject<Picture["crop"]>
     objectURL: string
 }) {
-    const film = constants.films[selectedFilm.value]
-    const crop = useSignal({x: 0, y: 0})
-    const zoom = useSignal(1)
-    const minZoom = useSignal(1)
+    const {selectedFilm} = useConfigStore()
+    const film = constants.films[selectedFilm]
+    const [crop, setCrop] = useState({x: 0, y: 0})
+    const [zoom, setZoom] = useState(1)
+    const [minZoom, setMinZoom] = useState(1)
     const topMargin = (film.frame.width - film.image.width) / 2
     const cropSize = {
         width: film.image.width * constants.MM,
@@ -39,37 +39,34 @@ function PictureEditor({
         >
             <Cropper
                 image={objectURL}
-                crop={crop.value}
-                zoom={zoom.value}
-                minZoom={minZoom.value}
+                crop={crop}
+                zoom={zoom}
+                minZoom={minZoom}
                 maxZoom={maxZoom}
                 rotation={rotation}
-                onCropChange={(newCrop) => {
-                    crop.value = newCrop
-                }}
-                onZoomChange={(newZoom) => (zoom.value = newZoom)}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
                 onMediaLoaded={(image) => {
-                    batch(() => {
-                        minZoom.value = Math.max(
-                            (film.image.width * constants.MM) / image.width,
-                            (film.image.height * constants.MM) / image.height,
-                        )
-                        const foo = getInitialCropFromCroppedAreaPercentages(
-                            {
-                                x: initialCrop.x,
-                                y: initialCrop.y,
-                                width: initialCrop.w,
-                                height: initialCrop.h,
-                            },
-                            image,
-                            rotation,
-                            cropSize,
-                            minZoom.value,
-                            maxZoom,
-                        )
-                        crop.value = foo.crop
-                        zoom.value = foo.zoom
-                    })
+                    const newMinZoom = Math.max(
+                        (film.image.width * constants.MM) / image.width,
+                        (film.image.height * constants.MM) / image.height,
+                    )
+                    setMinZoom(newMinZoom)
+                    const foo = getInitialCropFromCroppedAreaPercentages(
+                        {
+                            x: initialCrop.x,
+                            y: initialCrop.y,
+                            width: initialCrop.w,
+                            height: initialCrop.h,
+                        },
+                        image,
+                        rotation,
+                        cropSize,
+                        newMinZoom,
+                        maxZoom,
+                    )
+                    setCrop(foo.crop)
+                    setZoom(foo.zoom)
                 }}
                 onCropAreaChange={(newCrop) => {
                     currentCrop.current = {
@@ -87,19 +84,21 @@ function PictureEditor({
 }
 
 export function Picture({id, objectURL, crop, image: {width, height}}: Picture) {
-    const film = constants.films[selectedFilm.value]
+    const {selectedFilm} = useConfigStore()
+    const {update, remove} = usePicturesStore()
+    const film = constants.films[selectedFilm]
     const currentCrop = useRef(crop)
-    const isEditing = useSignal(false)
+    const [isEditing, setIsEditing] = useState(false)
     const topMargin = (film.frame.width - film.image.width) / 2
     return (
         <div
-            className="group Picture flex flex-col bg-white"
+            className="group Picture flex flex-col rounded-xs bg-white"
             style={{
                 width: `${film.frame.width * constants.MM}px`,
                 height: `${film.frame.height * constants.MM}px`,
             }}
         >
-            {isEditing.value ?
+            {isEditing ?
                 <PictureEditor
                     currentCrop={currentCrop}
                     initialCrop={crop}
@@ -120,15 +119,15 @@ export function Picture({id, objectURL, crop, image: {width, height}}: Picture) 
                     />
                 </div>
             }
-            <div className="mt-auto flex justify-end gap-2 p-2 opacity-0 transition-[opacity] group-hover:opacity-100">
-                {isEditing.value ?
+            <div className="mt-auto flex justify-end gap-2 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                {isEditing ?
                     <Button
                         size="icon"
                         className="size-7"
                         variant="secondary"
                         onClick={() => {
-                            isEditing.value = false
-                            pictures.update(id, {crop: currentCrop.current})
+                            setIsEditing(false)
+                            update(id, {crop: currentCrop.current})
                         }}
                     >
                         <CheckIcon />
@@ -138,7 +137,7 @@ export function Picture({id, objectURL, crop, image: {width, height}}: Picture) 
                             size="icon"
                             className="size-7"
                             variant="secondary"
-                            onClick={() => pictures.remove(id)}
+                            onClick={() => remove(id)}
                         >
                             <TrashIcon />
                         </Button>
@@ -146,7 +145,7 @@ export function Picture({id, objectURL, crop, image: {width, height}}: Picture) 
                             size="icon"
                             className="size-7"
                             variant="secondary"
-                            onClick={() => (isEditing.value = true)}
+                            onClick={() => setIsEditing(true)}
                         >
                             <Edit2Icon />
                         </Button>

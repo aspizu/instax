@@ -4,53 +4,64 @@ import {Progress} from "@/components/ui/progress"
 import {RadioGroup} from "@/components/ui/radio-group"
 import {useInterpolate} from "@/hooks/use-interpolate"
 import * as constants from "@/lib/constants"
-import {selectedFilm, selectedPaper} from "@/state/config"
-import {pictures} from "@/state/pictures"
-import * as printPDF from "@/workers/api/print-pdf"
-import {PrinterIcon} from "lucide-react"
-
-function onPrintPDFClicked() {
-    printPDF.start(
-        pictures.value.map((picture) => ({
-            objectURL: picture.objectURL,
-            crop: picture.crop,
-        })),
-        selectedFilm.value,
-        selectedPaper.value,
-    )
-}
+import {useConfigStore} from "@/state/config"
+import {usePicturesStore} from "@/state/pictures"
+import {usePrintPDFStore} from "@/workers/api/print-pdf"
+import {Heart, PrinterIcon} from "lucide-react"
 
 export function Toolbar() {
-    const prog = useInterpolate(printPDF.progress, 1000 / 60)
+    const {selectedFilm, selectedPaper, setSelectedFilm, setSelectedPaper} =
+        useConfigStore()
+    const {pictures} = usePicturesStore()
+    const {working, progress, start} = usePrintPDFStore()
+    const prog = useInterpolate(progress, 1000 / 60)
+
+    function onPrintPDFClicked() {
+        start(
+            pictures.map((picture) => ({
+                objectURL: picture.objectURL,
+                crop: picture.crop,
+            })),
+            selectedFilm,
+            selectedPaper,
+        )
+    }
+
     return (
-        <div className="fixed mb-auto flex h-dvh w-[200px] flex-col p-4">
+        <div className="fixed mb-auto flex h-dvh w-50 flex-col p-4">
             <h4 className="text-muted-foreground mb-2 text-xs font-semibold">FILM</h4>
             <RadioGroup
                 defaultValue="mini"
                 className="mb-4"
-                value={selectedFilm.value}
-                onValueChange={(value) => {
-                    selectedFilm.value = value as constants.Film
-                }}
+                value={selectedFilm}
+                onValueChange={(value) => setSelectedFilm(value as constants.Film)}
             >
                 {Object.entries(constants.films).map(([key, value]) => (
-                    <RadioCard key={key} value={key} {...value} />
+                    <RadioCard
+                        key={key}
+                        value={key}
+                        name={value.name}
+                        description={`${value.frame.width} x ${value.frame.height} mm`}
+                    />
                 ))}
             </RadioGroup>
             <h4 className="text-muted-foreground mb-2 text-xs font-semibold">PAPER</h4>
             <RadioGroup
                 defaultValue="a4"
                 className="mb-4"
-                value={selectedPaper.value}
-                onValueChange={(value) => {
-                    selectedPaper.value = value as constants.Paper
-                }}
+                value={selectedPaper}
+                onValueChange={(value) => setSelectedPaper(value as constants.Paper)}
             >
                 {Object.entries(constants.papers).map(([key, value]) => (
-                    <RadioCard key={key} value={key} {...value} />
+                    <RadioCard
+                        key={key}
+                        value={key}
+                        name={value.name}
+                        description={`${value.width} x ${value.height} mm`}
+                    />
                 ))}
             </RadioGroup>
-            <Button onClick={onPrintPDFClicked} disabled={printPDF.working.value}>
+            <Button onClick={onPrintPDFClicked} disabled={working}>
                 <PrinterIcon />
                 Print
             </Button>
@@ -58,17 +69,19 @@ export function Toolbar() {
                 <div className="mt-1 flex items-center gap-2">
                     <Progress value={prog * 100} />
                     <span className="shrink-0 text-xs font-semibold">
-                        {printPDF.progress.value * pictures.value.length} of{" "}
-                        {pictures.value.length}
+                        {progress * pictures.length} of {pictures.length}
                     </span>
                 </div>
             )}
+            <div className="grow" />
             <a
-                href="https://github.com/aspizu"
+                href="https://github.com/aspizu/instax"
                 target="_blank"
-                className="hover:bg-foreground hover:text-background mx-auto mt-auto flex rounded-md px-2 py-1 text-xs font-semibold opacity-75 transition-all hover:opacity-100 hover:shadow-lg"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs font-medium text-neutral-800 underline-offset-2 hover:underline"
             >
-                Made with ❤️ by aspizu
+                made with <Heart className="size-3 fill-pink-400" strokeWidth={0} /> by
+                aspizu
             </a>
         </div>
     )

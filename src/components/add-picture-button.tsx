@@ -1,35 +1,38 @@
 import * as constants from "@/lib/constants"
 import {tryCatch} from "@/lib/try-catch"
-import {selectedFilm} from "@/state/config"
-import * as pictures from "@/state/pictures"
+import {useConfigStore} from "@/state/config"
+import {usePicturesStore} from "@/state/pictures"
 import {ImagePlusIcon} from "lucide-react"
 import {showOpenFilePicker} from "show-open-file-picker"
 
-async function onAddPicture() {
-    const handles = await tryCatch(
-        showOpenFilePicker({
-            multiple: true,
-            types: [
-                {
-                    accept: {
-                        "image/*": [".png", ".jpeg", ".jpg"],
-                    },
-                },
-            ],
-            startIn: "pictures",
-        }),
-    )
-    if (handles.error) return
-    const files = await Promise.all(handles.data.map((handle) => handle.getFile()))
-    await pictures.add(...files)
-}
-
 export function AddPictureButton() {
-    const film = constants.films[selectedFilm.value]
+    const {selectedFilm} = useConfigStore()
+    const add = usePicturesStore((state) => state.add)
+    const film = constants.films[selectedFilm]
     const topMargin = (film.frame.width - film.image.width) / 2
+
+    async function onAddPicture() {
+        const handles = await tryCatch(
+            showOpenFilePicker({
+                multiple: true,
+                types: [
+                    {
+                        accept: {
+                            "image/*": [".png", ".jpeg", ".jpg"],
+                        },
+                    },
+                ],
+                startIn: "pictures",
+            }),
+        )
+        if (handles.error) return
+        const files = await Promise.all(handles.data.map((handle) => handle.getFile()))
+        await add(selectedFilm, files)
+    }
+
     return (
         <div
-            className="Picture bg-neutral-50 opacity-50 transition-[opacity] hover:opacity-75"
+            className="Picture rounded-xs bg-white"
             style={{
                 width: `${film.frame.width * constants.MM}px`,
                 height: `${film.frame.height * constants.MM}px`,
@@ -39,7 +42,7 @@ export function AddPictureButton() {
             onClick={() => void onAddPicture()}
         >
             <div
-                className="flex items-center justify-center bg-neutral-200"
+                className="flex cursor-pointer items-center justify-center border border-neutral-200 bg-neutral-100 text-neutral-500 hover:text-neutral-700"
                 style={{
                     marginTop: `${topMargin * constants.MM}px`,
                     marginLeft: `${topMargin * constants.MM}px`,
@@ -47,7 +50,7 @@ export function AddPictureButton() {
                     height: `${film.image.height * constants.MM}px`,
                 }}
             >
-                <ImagePlusIcon className="text-neutral-900" />
+                <ImagePlusIcon strokeWidth={1.25} className="size-8" />
             </div>
         </div>
     )
