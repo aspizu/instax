@@ -5,7 +5,7 @@ import {usePicturesStore} from "@/state/pictures"
 export function Pictures() {
     const {pictures} = usePicturesStore()
     return (
-        <div className="ml-50 flex flex-wrap gap-4 bg-white p-4">
+        <div className="ml-50 flex h-dvh flex-wrap gap-4 bg-neutral-100 p-4">
             {pictures.map((picture) => (
                 <Picture key={picture.id} {...picture} />
             ))}

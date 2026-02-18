@@ -7,7 +7,7 @@ import * as constants from "@/lib/constants"
 import {useConfigStore} from "@/state/config"
 import {usePicturesStore} from "@/state/pictures"
 import {usePrintPDFStore} from "@/workers/api/print-pdf"
-import {Heart, PrinterIcon} from "lucide-react"
+import {Github, Globe, Heart, PrinterIcon} from "lucide-react"
 
 export function Toolbar() {
     const {selectedFilm, selectedPaper, setSelectedFilm, setSelectedPaper} =
@@ -21,6 +21,7 @@ export function Toolbar() {
             pictures.map((picture) => ({
                 objectURL: picture.objectURL,
                 crop: picture.crop,
+                color: picture.color,
             })),
             selectedFilm,
             selectedPaper,
@@ -29,6 +30,8 @@ export function Toolbar() {
 
     return (
         <div className="fixed mb-auto flex h-dvh w-50 flex-col p-4">
+            <img src="assets/logo.webp" alt="Instax" className="mx-auto mb-4 w-24" />
+            <div className="mb-4 border-b" />
             <h4 className="text-muted-foreground mb-2 text-xs font-semibold">FILM</h4>
             <RadioGroup
                 defaultValue="mini"
@@ -61,6 +64,7 @@ export function Toolbar() {
                     />
                 ))}
             </RadioGroup>
+
             <Button onClick={onPrintPDFClicked} disabled={working}>
                 <PrinterIcon />
                 Print
@@ -74,15 +78,36 @@ export function Toolbar() {
                 </div>
             )}
             <div className="grow" />
-            <a
-                href="https://github.com/aspizu/instax"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs font-medium text-neutral-800 underline-offset-2 hover:underline"
-            >
-                made with <Heart className="size-3 fill-pink-400" strokeWidth={0} /> by
-                aspizu
-            </a>
+            <div className="mt-4 border-t pt-3">
+                <div className="flex flex-col gap-1 text-[11px] text-neutral-500">
+                    <div className="flex items-center justify-center gap-2">
+                        <a
+                            href="https://github.com/aspizu"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 transition-colors hover:text-neutral-900"
+                        >
+                            <Github className="size-3" />
+                            github
+                        </a>
+                        <span className="text-neutral-300">/</span>
+                        <a
+                            href="/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 transition-colors hover:text-neutral-900"
+                        >
+                            <Globe className="size-3" />
+                            more stuff
+                        </a>
+                    </div>
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-neutral-400">
+                        <span>made with</span>
+                        <Heart className="size-2.5 fill-pink-400 text-pink-400" />
+                        <span>by aspizu</span>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

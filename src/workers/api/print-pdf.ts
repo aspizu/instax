@@ -12,6 +12,7 @@ interface PrintPDFState {
         pictures: {
             objectURL: string
             crop: {x: number; y: number; w: number; h: number}
+            color: string
         }[],
         filmKey: Film,
         paperKey: Paper,

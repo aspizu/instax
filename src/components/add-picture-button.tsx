@@ -4,6 +4,7 @@ import {useConfigStore} from "@/state/config"
 import {usePicturesStore} from "@/state/pictures"
 import {ImagePlusIcon} from "lucide-react"
 import {showOpenFilePicker} from "show-open-file-picker"
+import {toast} from "sonner"
 
 export function AddPictureButton() {
     const {selectedFilm} = useConfigStore()
@@ -25,9 +26,19 @@ export function AddPictureButton() {
                 startIn: "pictures",
             }),
         )
-        if (handles.error) return
+        if (handles.error) {
+            if (handles.error.name !== "AbortError") {
+                toast.error(handles.error.message)
+            }
+            return
+        }
         const files = await Promise.all(handles.data.map((handle) => handle.getFile()))
-        await add(selectedFilm, files)
+        const failed = await add(selectedFilm, files)
+        if (failed.length > 0) {
+            for (const imageName of failed) {
+                toast.error(`failed to import ${imageName}`)
+            }
+        }
     }
 
     return (

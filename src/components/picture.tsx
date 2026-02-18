@@ -1,10 +1,12 @@
+import ColorPicker from "@/components/color-picker"
 import {DisplayImage} from "@/components/display-image"
 import {Button} from "@/components/ui/button"
 import * as constants from "@/lib/constants"
+import {cn} from "@/lib/utils"
 import {useConfigStore} from "@/state/config"
 import type {Picture} from "@/state/pictures"
 import {usePicturesStore} from "@/state/pictures"
-import {CheckIcon, Edit2Icon, TrashIcon} from "lucide-react"
+import {CheckIcon, Edit2Icon, PaintBucket, TrashIcon} from "lucide-react"
 import {useRef, useState, type RefObject} from "react"
 import Cropper, {getInitialCropFromCroppedAreaPercentages} from "react-easy-crop"
 
@@ -83,21 +85,36 @@ function PictureEditor({
     )
 }
 
-export function Picture({id, objectURL, crop, image: {width, height}}: Picture) {
+export function Picture({id, objectURL, crop, image: {width, height}, color}: Picture) {
     const {selectedFilm} = useConfigStore()
     const {update, remove} = usePicturesStore()
     const film = constants.films[selectedFilm]
     const currentCrop = useRef(crop)
     const [isEditing, setIsEditing] = useState(false)
+    const [isEditingColor, setIsEditingColor] = useState(false)
+    if (isEditingColor && !isEditing) {
+        setIsEditingColor(false)
+    }
     const topMargin = (film.frame.width - film.image.width) / 2
     return (
         <div
-            className="group Picture flex flex-col rounded-xs bg-white"
+            className="group Picture relative flex flex-col rounded-xs"
             style={{
                 width: `${film.frame.width * constants.MM}px`,
                 height: `${film.frame.height * constants.MM}px`,
+                backgroundColor: color,
             }}
         >
+            {isEditingColor && isEditing && (
+                <div className="absolute bottom-11 left-2 z-1">
+                    <ColorPicker
+                        value={color}
+                        onChange={(color) => {
+                            update(id, {color})
+                        }}
+                    />
+                </div>
+            )}
             {isEditing ?
                 <PictureEditor
                     currentCrop={currentCrop}
@@ -119,35 +136,54 @@ export function Picture({id, objectURL, crop, image: {width, height}}: Picture) 
                     />
                 </div>
             }
-            <div className="mt-auto flex justify-end gap-2 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+            <div
+                className={cn(
+                    "mt-auto flex justify-end gap-2 p-2 transition-opacity group-hover:opacity-100",
+                    !isEditing && "opacity-0",
+                )}
+            >
                 {isEditing ?
-                    <Button
-                        size="icon"
-                        className="size-7"
-                        variant="secondary"
-                        onClick={() => {
-                            setIsEditing(false)
-                            update(id, {crop: currentCrop.current})
-                        }}
-                    >
-                        <CheckIcon />
-                    </Button>
+                    <>
+                        <Button
+                            size="sm"
+                            className="mr-auto h-7"
+                            variant="outline"
+                            onClick={() => {
+                                setIsEditingColor(!isEditingColor)
+                            }}
+                        >
+                            <PaintBucket />
+                            Color
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="h-7"
+                            variant="default"
+                            onClick={() => {
+                                setIsEditing(false)
+                                update(id, {crop: currentCrop.current})
+                            }}
+                        >
+                            <CheckIcon />
+                            Done
+                        </Button>
+                    </>
                 :   <>
                         <Button
                             size="icon"
                             className="size-7"
-                            variant="secondary"
+                            variant="outline"
                             onClick={() => remove(id)}
                         >
                             <TrashIcon />
                         </Button>
                         <Button
-                            size="icon"
-                            className="size-7"
-                            variant="secondary"
+                            size="sm"
+                            className="h-7"
                             onClick={() => setIsEditing(true)}
                         >
                             <Edit2Icon />
+                            Edit
                         </Button>
                     </>
                 }

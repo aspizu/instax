@@ -1,19 +1,22 @@
 import {clsx, type ClassValue} from "clsx"
+import {err, ok, type Result} from "neverthrow"
 import {twMerge} from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-export function loadImage(objectURL: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
+export function loadImage(
+    objectURL: string,
+): Promise<Result<HTMLImageElement, string>> {
+    return new Promise((resolve) => {
         const image = new Image()
         image.src = objectURL
         image.onload = () => {
-            resolve(image)
+            resolve(ok(image))
         }
         image.onerror = () => {
-            reject(new Error(`Failed to load image from URL: ${objectURL}`))
+            resolve(err("Invalid image"))
         }
     })
 }

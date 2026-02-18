@@ -13,11 +13,12 @@ export interface Picture {
         h: number
     }
     image: HTMLImageElement
+    color: string
 }
 
 interface PicturesState {
     pictures: Picture[]
-    add: (film: Film, files: File[]) => Promise<void>
+    add: (film: Film, files: File[]) => Promise<string[]>
     remove: (id: string) => void
     update: (id: string, params: Partial<Picture>) => void
     recrop: (film: Film) => void
@@ -42,10 +43,17 @@ export const usePicturesStore = create<PicturesState>((set, get) => ({
     add: async (film, files) => {
         const filmData = films[film]
         const newPictures: Picture[] = []
+        const failed = []
         for (const file of files) {
             const id = crypto.randomUUID()
             const objectURL = URL.createObjectURL(file)
-            const image = await loadImage(objectURL)
+            const imageResult = await loadImage(objectURL)
+            if (imageResult.isErr()) {
+                URL.revokeObjectURL(objectURL)
+                failed.push(file.name)
+                continue
+            }
+            const image = imageResult.value
             const crop = getCrop(
                 image.width,
                 image.height,
@@ -58,9 +66,11 @@ export const usePicturesStore = create<PicturesState>((set, get) => ({
                 objectURL,
                 crop,
                 image,
+                color: "#FFFFFF",
             })
         }
         set({pictures: [...get().pictures, ...newPictures]})
+        return failed
     },
     remove: (id) => {
         const picture = get().pictures.find((p) => p.id === id)
